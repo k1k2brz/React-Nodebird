@@ -1,0 +1,29 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next",
+    "build": "next build"
+  },
+  "author": "Lee-Tae-Il",
+  "license": "ISC",
+  "dependencies": {
+    "@ant-design/icons": "^4.8.0",
+    "antd": "^5.0.0",
+    "next": "^9.5.5",
+    "prop-types": "^15.8.1",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "styled-components": "^5.3.6",
+    "upgrade": "^1.1.0",
+    "webpack": "^4.44.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.27.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-react": "^7.31.10",
+    "eslint-plugin-react-hooks": "^4.6.0"
+  }
+}
