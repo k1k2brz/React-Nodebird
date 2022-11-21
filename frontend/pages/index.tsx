@@ -12,7 +12,7 @@ const Home = () => {
     // 다른 컴포넌트로 감싸줄 경우 다른 컴포넌트 사용 가능
     <AppLayout>
       {isLoggedIn && <PostForm />}
-      {mainPosts.map((post) => <PostCard key={post.id} post={post} />)}
+      {mainPosts.map((post: any) => <PostCard key={post.id} post={post} />)}
     </AppLayout>
   );
 };

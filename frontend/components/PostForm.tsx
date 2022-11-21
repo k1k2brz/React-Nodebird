@@ -7,7 +7,7 @@ const PostForm = () => {
     const { imagePaths } = useSelector((state: any) => state.post);
     const dispatch = useDispatch()
     const imageInput = useRef(null);
-    const [text, setText] = useState<any>('')
+    const [text, setText] = useState<string>('')
     const onChangeText = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setText(e.target.value)
     }, [])

@@ -1,4 +1,10 @@
-export const initialState = {
+type mainPost = {
+    mainPosts: object[],
+    imagePaths: object[],
+    postAdded: boolean,
+}
+
+export const initialState: mainPost = {
     mainPosts: [{
         id: 1,
         User: {
@@ -29,7 +35,8 @@ export const initialState = {
     postAdded: false,
 }
 // 변수로 지정해주면 편하다
-const ADD_POST = 'ADD_POST';
+// as const를 지정하면 타입이 아니라 실제 값을 가리키게 됨
+const ADD_POST = 'ADD_POST' as const;
 export const addPost = {
     type: ADD_POST,
 }
@@ -38,13 +45,13 @@ const dummyPost = {
     content: '더미데이터입니다.',
     User: {
         id: 1,
-        nickname: '제로초',
+        nickname: 'Tae-',
     },
     Images: [],
     Comments: [],
 };
 
-const reducer = (state = initialState, action) => {
+const reducer = (state: mainPost = initialState, action: any) => {
     switch (action.type) {
         case ADD_POST:
             return {
