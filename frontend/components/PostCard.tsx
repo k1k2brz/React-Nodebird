@@ -1,15 +1,24 @@
 import { EllipsisOutlined, HeartOutlined, HeartTwoTone, MessageOutlined, RetweetOutlined } from '@ant-design/icons';
-import { Avatar, Button, Card, List, Popover } from 'antd';
+import { Avatar, Button, Card, List, Popover, Comment } from 'antd';
 // import { Comment } from '@ant-design/compatible';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import PostImages from './PostImages';
 import PropTypes from 'prop-types';
 import { useCallback, useState } from 'react';
 import CommentForm from './CommentForm';
+import PostCardContent from './PostCardContent';
+import { REMOVE_POST_REQUEST } from '../reducers/post';
 
 const PostCard = ({ post }) => {
+    const dispatch = useDispatch();
+    const { removePostLoading } = useSelector((state: any) => state.post);
     const [liked, setLiked] = useState<boolean>(false);
     const [commentFormOpened, setCommentFormOpened] = useState<boolean>(false);
+    // state.user.me && state.user.me.id 를 옵셔널 체이닝으로 줄여서
+    // const id = useSelector((state: any) => state.user.me?.id)
+    const { me } = useSelector((state: any) => state.user);
+    const id = me && me.id;
+
     const onToggleLike = useCallback(() => {
         setLiked((prev) => !prev);
         // false는 true true는 false toggle 코드
@@ -18,8 +27,13 @@ const PostCard = ({ post }) => {
         setCommentFormOpened((prev) => !prev)
     }, [])
 
-    const id = useSelector((state: any) => state.user.me?.id)
-    // state.user.me && state.user.me.id 를 옵셔널 체이닝으로 줄여서
+    const onRemovePost = useCallback(() => {
+        dispatch({
+            type: REMOVE_POST_REQUEST,
+            data: post.id,
+        })
+    }, [])
+
     return (
         <div style={{ marginBottom: 20 }}>
             {/* cover, actions는 antd기능 */}
@@ -40,7 +54,7 @@ const PostCard = ({ post }) => {
                                     ? (
                                         <>
                                             <Button>수정</Button>
-                                            <Button type="danger">삭제</Button>
+                                            <Button type="danger" loading={removePostLoading} onClick={onRemovePost}>삭제</Button>
                                             {/* loading={removePostLoading} onClick={onRemovePost} */}
                                         </>
                                     )
@@ -56,8 +70,7 @@ const PostCard = ({ post }) => {
                 <Card.Meta
                     avatar={<Avatar>{post.User.nickname[0]}</Avatar>}
                     title={post.User.nickname}
-                    description={post.content}
-                // <PostCardContent postData={post.content} />
+                    description={<PostCardContent postData={post.content} />}
                 />
             </Card>
             {commentFormOpened && (
@@ -80,8 +93,6 @@ const PostCard = ({ post }) => {
                     />
                 </div>
             )}
-            {/* <CommentForm />
-            <Comments /> */}
         </div >
     )
 }
