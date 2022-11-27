@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Form, Input, Checkbox, Button } from 'antd'
 import Head from "next/head";
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
+import Router from 'next/router';
 
 import AppLayout from "../components/AppLayout";
 import useInput from '../hooks/useInput';
@@ -15,7 +16,20 @@ const ErrorMessage = styled.div`
 const Signup = () => {
   // 원할 때 dispatch로 Redux에서 꺼내오는 것
   const dispatch = useDispatch();
-  const { signUpLoading } = useSelector((state: any) => state.user)
+  const { signUpLoading, signUpDone, signUpError } = useSelector((state: any) => state.user)
+
+  // 회원가입 완료되면 메인페이지로 돌아감
+  useEffect(() => {
+    if (signUpDone) {
+      Router.push('/');
+    }
+  }, [signUpDone]);
+
+  useEffect(() => {
+    if (signUpError) {
+      alert(signUpError)
+    }
+  }, [signUpError]);
 
   const [email, onChangeEmail] = useInput('');
   const [nickname, onChangeNickname] = useInput('');
@@ -26,7 +40,7 @@ const Signup = () => {
     // React.ChangeEvent<HTMLFormElement>
     setPasswordCheck(e.target.value)
     setPasswordError(e.target.value !== password);
-  }, [password])
+  }, [password]);
 
   const [term, setTerm] = useState<boolean>();
   const [termError, setTermError] = useState(false);

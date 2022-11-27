@@ -98,6 +98,7 @@ const reducer = (state = initialState, action) => produce(state, (draft) => {
             break;
         case UNFOLLOW_SUCCESS:
             draft.unfollowLoading = false;
+            // 언팔한 사람 제외
             draft.me.Followings = draft.me.Followings.filter((v) => v.id !== action.data);
             draft.unfollowDone = true;
             break;

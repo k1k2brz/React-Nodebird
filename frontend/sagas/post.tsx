@@ -1,11 +1,33 @@
-import { all, fork, delay, put, takeEvery } from 'redux-saga/effects';
+import { all, fork, delay, put, takeEvery, takeLatest, throttle } from 'redux-saga/effects';
 import shortId from 'shortid';
 import axios from 'axios';
 import {
     ADD_COMMENT_FAILURE, ADD_COMMENT_REQUEST, ADD_COMMENT_SUCCESS,
-    ADD_POST_FAILURE, ADD_POST_REQUEST, ADD_POST_SUCCESS, REMOVE_POST_FAILURE, REMOVE_POST_REQUEST, REMOVE_POST_SUCCESS,
+    ADD_POST_FAILURE, ADD_POST_REQUEST, ADD_POST_SUCCESS, generateDummyPost, LOAD_POSTS_FAILURE, LOAD_POSTS_REQUEST, LOAD_POSTS_SUCCESS, REMOVE_POST_FAILURE, REMOVE_POST_REQUEST, REMOVE_POST_SUCCESS,
 } from '../reducers/post';
 import { ADD_POST_TO_ME, REMOVE_POST_OF_ME } from '../reducers/user';
+
+function loadPostsAPI(data) {
+    return axios.get('/api/post', data)
+}
+
+function* loadPosts(action) {
+    try {
+        // const result = yield call(loadPostsAPI, action.data)
+        yield delay(1000);
+        const id = shortId.generate();
+        yield put({
+            type: LOAD_POSTS_SUCCESS,
+            // action.data에 작성한 글이 들어있음
+            data: generateDummyPost(10), // reducer에서 만든 함수
+        });
+    } catch (err) {
+        yield put({
+            type: LOAD_POSTS_FAILURE,
+            data: err.response.data,
+        })
+    }
+}
 
 function addPostAPI(data) {
     return axios.post('/api/post', data)
@@ -86,21 +108,27 @@ function* addComment(action) {
     }
 }
 
+function* watchLoadPosts() {
+    // 무한스크롤 이벤트 대량발생 방지
+    yield throttle(2000, LOAD_POSTS_REQUEST, loadPosts);
+}
+
 function* watchAddPost() {
-    yield takeEvery(ADD_POST_REQUEST, addPost);
+    yield takeLatest(ADD_POST_REQUEST, addPost);
 }
 
 function* watchRemovePost() {
-    yield takeEvery(REMOVE_POST_REQUEST, removePost);
+    yield takeLatest(REMOVE_POST_REQUEST, removePost);
 }
 
 function* watchAddComment() {
-    yield takeEvery(ADD_COMMENT_REQUEST, addComment);
+    yield takeLatest(ADD_COMMENT_REQUEST, addComment);
 }
 
 export default function* postSaga() {
     yield all([
         fork(watchAddPost),
+        fork(watchLoadPosts),
         fork(watchRemovePost),
         fork(watchAddComment),
     ])

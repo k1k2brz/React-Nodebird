@@ -1,5 +1,6 @@
 import shortId from 'shortid';
 import produce from 'immer';
+import { faker } from '@faker-js/faker';
 
 export type mainPost = {
     mainPosts: any,
@@ -20,42 +21,43 @@ export type mainPost = {
 }
 
 export const initialState: mainPost = {
-    mainPosts: [{
-        id: 1,
-        User: {
-            id: 1,
-            nickname: 'TaeIl'
-        },
-        content: '첫 번째 게시글 #해시태그 #익스프레스',
-        Images: [{
-            id: shortId.generate(),
-            src: 'https://bookthumb-phinf.pstatic.net/cover/137/995/13799585.jpg?udate=20180726',
-        }, {
-            id: shortId.generate(),
-            src: 'https://gimg.gilbut.co.kr/book/BN001958/rn_view_BN001958.jpg',
-        }, {
-            id: shortId.generate(),
-            src: 'https://gimg.gilbut.co.kr/book/BN001998/rn_view_BN001998.jpg',
-        }],
-        // 대문자는 서버에서 주는 애들
-        Comments: [{
-            id: shortId.generate(),
-            User: {
-                id: shortId.generate(),
-                nickname: 'nero',
-            },
-            content: '우와 개정판이 나왔군요~',
-        }, {
-            id: shortId.generate(),
-            User: {
-                id: shortId.generate(),
-                nickname: 'hero',
-            },
-            content: '얼른 사고싶어요~',
-        }]
-    }],
+    //     {
+    //     id: 1,
+    //     User: {
+    //         id: 1,
+    //         nickname: 'TaeIl'
+    //     },
+    //     content: '첫 번째 게시글 #해시태그 #익스프레스',
+    //     Images: [{
+    //         id: shortId.generate(),
+    //         src: 'https://bookthumb-phinf.pstatic.net/cover/137/995/13799585.jpg?udate=20180726',
+    //     }, {
+    //         id: shortId.generate(),
+    //         src: 'https://gimg.gilbut.co.kr/book/BN001958/rn_view_BN001958.jpg',
+    //     }, {
+    //         id: shortId.generate(),
+    //         src: 'https://gimg.gilbut.co.kr/book/BN001998/rn_view_BN001998.jpg',
+    //     }],
+    //     // 대문자는 서버에서 주는 애들
+    //     Comments: [{
+    //         id: shortId.generate(),
+    //         User: {
+    //             id: shortId.generate(),
+    //             nickname: 'nero',
+    //         },
+    //         content: '우와 개정판이 나왔군요~',
+    //     }, {
+    //         id: shortId.generate(),
+    //         User: {
+    //             id: shortId.generate(),
+    //             nickname: 'hero',
+    //         },
+    //         content: '얼른 사고싶어요~',
+    //     }]
+    // }
+    mainPosts: [],
     imagePaths: [],
-    hasMorePosts: true,
+    hasMorePosts: true, // infinite scroll
     loadPostsLoading: false,
     loadPostsDone: false,
     loadPostsError: null,
@@ -69,8 +71,32 @@ export const initialState: mainPost = {
     addCommentDone: false,
     addCommentError: null,
 }
+
+// infinite scrolling
+export const generateDummyPost = (number) => Array(number).fill(undefined).map(() => ({
+    id: shortId.generate(),
+    User: {
+        id: shortId.generate(),
+        nickname: faker.internet.userName(),
+    },
+    content: faker.lorem.paragraph(),
+    Images: [{
+        src: faker.image.image(),
+    }],
+    Comments: [{
+        User: {
+            id: shortId.generate(),
+            nickname: faker.internet.userName(),
+        },
+        content: faker.lorem.sentence(),
+    }],
+}));
+
+
 // 변수로 지정해주면 편하다
 // as const를 지정하면 타입이 아니라 실제 값을 가리키게 됨
+
+// 화면 로딩하면
 export const LOAD_POSTS_REQUEST = 'LOAD_POSTS_REQUEST' as const;
 export const LOAD_POSTS_SUCCESS = 'LOAD_POSTS_SUCCESS' as const;
 export const LOAD_POSTS_FAILURE = 'LOAD_POSTS_FAILURE' as const;
@@ -127,6 +153,21 @@ const reducer = (state: mainPost = initialState, action: any) => {
     // immer 사용
     return produce(state, (draft) => {
         switch (action.type) {
+            case LOAD_POSTS_REQUEST:
+                draft.loadPostsLoading = true;
+                draft.loadPostsDone = false;
+                draft.loadPostsError = null;
+                break;
+            case LOAD_POSTS_SUCCESS:
+                draft.loadPostsLoading = false;
+                draft.loadPostsDone = true;
+                draft.mainPosts = action.data.concat(draft.mainPosts);
+                draft.hasMorePosts = draft.mainPosts.length < 50;
+                break;
+            case LOAD_POSTS_FAILURE:
+                draft.loadPostsLoading = false;
+                draft.loadPostsError = action.error;
+                break;
             case ADD_POST_REQUEST:
                 draft.addPostLoading = true;
                 draft.addPostDone = false;
