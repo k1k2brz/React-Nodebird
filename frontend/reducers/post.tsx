@@ -1,10 +1,16 @@
-import shortId from 'shortid';
 import produce from 'immer';
-import { faker } from '@faker-js/faker';
+// import shortId from 'shortid';
+// import { faker } from '@faker-js/faker';
 
 export type mainPost = {
     mainPosts: any,
     imagePaths: object[],
+    likePostLoading: boolean,
+    likePostDone: boolean,
+    likePostError: boolean,
+    unlikePostLoading: boolean,
+    unlikePostDone: boolean,
+    unlikePostError: boolean,
     addPostLoading: boolean,
     addPostDone: boolean,
     addPostError: boolean,
@@ -58,6 +64,12 @@ export const initialState: mainPost = {
     mainPosts: [],
     imagePaths: [],
     hasMorePosts: true, // infinite scroll
+    likePostLoading: false,
+    likePostDone: false,
+    likePostError: null,
+    unlikePostLoading: false,
+    unlikePostDone: false,
+    unlikePostError: null,
     loadPostsLoading: false,
     loadPostsDone: false,
     loadPostsError: null,
@@ -73,30 +85,38 @@ export const initialState: mainPost = {
 }
 
 // infinite scrolling
-export const generateDummyPost = (number) => Array(number).fill(undefined).map(() => ({
-    id: shortId.generate(),
-    User: {
-        id: shortId.generate(),
-        nickname: faker.internet.userName(),
-    },
-    content: faker.lorem.paragraph(),
-    Images: [{
-        src: faker.image.image(),
-    }],
-    Comments: [{
-        User: {
-            id: shortId.generate(),
-            nickname: faker.internet.userName(),
-        },
-        content: faker.lorem.sentence(),
-    }],
-}));
+// export const generateDummyPost = (number) => Array(number).fill(undefined).map(() => ({
+//     id: shortId.generate(),
+//     User: {
+//         id: shortId.generate(),
+//         nickname: faker.internet.userName(),
+//     },
+//     content: faker.lorem.paragraph(),
+//     Images: [{
+//         src: faker.image.image(),
+//     }],
+//     Comments: [{
+//         User: {
+//             id: shortId.generate(),
+//             nickname: faker.internet.userName(),
+//         },
+//         content: faker.lorem.sentence(),
+//     }],
+// }));
 
 
 // 변수로 지정해주면 편하다
 // as const를 지정하면 타입이 아니라 실제 값을 가리키게 됨
 
 // 화면 로딩하면
+export const LIKE_POST_REQUEST = 'LIKE_POST_REQUEST' as const;
+export const LIKE_POST_SUCCESS = 'LIKE_POST_SUCCESS' as const;
+export const LIKE_POST_FAILURE = 'LIKE_POST_FAILURE' as const;
+
+export const UNLIKE_POST_REQUEST = 'UNLIKE_POST_REQUEST' as const;
+export const UNLIKE_POST_SUCCESS = 'UNLIKE_POST_SUCCESS' as const;
+export const UNLIKE_POST_FAILURE = 'UNLIKE_POST_FAILURE' as const;
+
 export const LOAD_POSTS_REQUEST = 'LOAD_POSTS_REQUEST' as const;
 export const LOAD_POSTS_SUCCESS = 'LOAD_POSTS_SUCCESS' as const;
 export const LOAD_POSTS_FAILURE = 'LOAD_POSTS_FAILURE' as const;
@@ -124,28 +144,28 @@ export const addComment = (data) => ({
     data,
 })
 
-const dummyPost = (data) => ({
-    // shortId를 넣으면 더미데이터 Encountered two children with the same key에러는 해결이 되지만
-    // Failed prop type에러가 뜬다. 나중에 실제 데이터 넣어서 해결해야 할 듯
-    id: data.id,
-    // 게시글
-    content: data.content,
-    User: {
-        id: 1,
-        nickname: 'Violet',
-    },
-    Images: [],
-    Comments: [],
-});
+// const dummyPost = (data) => ({
+//     // shortId를 넣으면 더미데이터 Encountered two children with the same key에러는 해결이 되지만
+//     // Failed prop type에러가 뜬다. 나중에 실제 데이터 넣어서 해결해야 할 듯
+//     id: data.id,
+//     // 게시글
+//     content: data.content,
+//     User: {
+//         id: 1,
+//         nickname: 'Violet',
+//     },
+//     Images: [],
+//     Comments: [],
+// });
 
-const dummyComment = (data) => ({
-    id: shortId.generate(),
-    content: data,
-    User: {
-        id: 1,
-        nickname: 'Violet',
-    },
-});
+// const dummyComment = (data) => ({ // 더미 코멘트
+//     id: shortId.generate(),
+//     content: data,
+//     User: {
+//         id: 1,
+//         nickname: 'Violet',
+//     },
+// });
 
 // 이전 상태를 액션을 통해 다음 상태로 만들어내는 함수(불변성은 지키면서)
 const reducer = (state: mainPost = initialState, action: any) => {
@@ -153,6 +173,38 @@ const reducer = (state: mainPost = initialState, action: any) => {
     // immer 사용
     return produce(state, (draft) => {
         switch (action.type) {
+            case LIKE_POST_REQUEST:
+                draft.likePostLoading = true;
+                draft.likePostDone = false;
+                draft.likePostError = null;
+                break;
+            case LIKE_POST_SUCCESS: {
+                const post = draft.mainPosts.find((v) => v.id === action.data.PostId);
+                post.Likers.push({ id: action.data.UserId });
+                draft.likePostLoading = false;
+                draft.likePostDone = true;
+                break;
+            }
+            case LIKE_POST_FAILURE:
+                draft.likePostLoading = false;
+                draft.likePostError = action.error;
+                break;
+            case UNLIKE_POST_REQUEST:
+                draft.unlikePostLoading = true;
+                draft.unlikePostDone = false;
+                draft.unlikePostError = null;
+                break;
+            case UNLIKE_POST_SUCCESS: {
+                const post = draft.mainPosts.find((v) => v.id === action.data.PostId);
+                post.Likers = post.Likers.filter((v) => v.id !== action.data.UserId);
+                draft.unlikePostLoading = false;
+                draft.unlikePostDone = true;
+                break;
+            }
+            case UNLIKE_POST_FAILURE:
+                draft.unlikePostLoading = false;
+                draft.unlikePostError = action.error;
+                break;
             case LOAD_POSTS_REQUEST:
                 draft.loadPostsLoading = true;
                 draft.loadPostsDone = false;
@@ -161,8 +213,8 @@ const reducer = (state: mainPost = initialState, action: any) => {
             case LOAD_POSTS_SUCCESS:
                 draft.loadPostsLoading = false;
                 draft.loadPostsDone = true;
-                draft.mainPosts = action.data.concat(draft.mainPosts);
-                draft.hasMorePosts = draft.mainPosts.length < 50;
+                draft.mainPosts = draft.mainPosts.concat(action.data);
+                draft.hasMorePosts = action.data.length === 10;
                 break;
             case LOAD_POSTS_FAILURE:
                 draft.loadPostsLoading = false;
@@ -176,7 +228,8 @@ const reducer = (state: mainPost = initialState, action: any) => {
             case ADD_POST_SUCCESS:
                 draft.addPostLoading = false;
                 draft.addPostDone = true;
-                draft.mainPosts.unshift(dummyPost(action.data));
+                draft.mainPosts.unshift(action.data);
+                draft.imagePaths = [];
                 break;
             // return {
             //     ...state,
@@ -196,11 +249,11 @@ const reducer = (state: mainPost = initialState, action: any) => {
                 draft.removePostError = null;
                 break;
             case REMOVE_POST_SUCCESS:
-                draft.removePostLoading = true;
+                draft.removePostLoading = false;
                 draft.removePostDone = true;
                 // 앞에서 dummyPost추가해야 맨 위
                 // sagas의 post에서 넘어온 게시글 action.data
-                draft.mainPosts = draft.mainPosts.filter((v) => v.id !== action.data);
+                draft.mainPosts = draft.mainPosts.filter((v) => v.id !== action.data.PostId);
                 break;
             case REMOVE_POST_FAILURE:
                 draft.removePostLoading = false;
@@ -212,8 +265,8 @@ const reducer = (state: mainPost = initialState, action: any) => {
                 draft.addCommentError = null;
                 break;
             case ADD_COMMENT_SUCCESS: {
-                const post = draft.mainPosts.find((v) => v.id === action.data.postId);
-                post.Comments.unshift(dummyComment(action.data.content));
+                const post = draft.mainPosts.find((v) => v.id === action.data.PostId);
+                post.Comments.unshift(action.data);
                 draft.addCommentLoading = false;
                 draft.addCommentDone = true;
                 break;

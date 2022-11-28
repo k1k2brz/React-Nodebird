@@ -6,12 +6,16 @@ import {
     SIGN_UP_REQUEST, SIGN_UP_FAILURE, SIGN_UP_SUCCESS,
     FOLLOW_REQUEST, UNFOLLOW_REQUEST, FOLLOW_SUCCESS,
     FOLLOW_FAILURE, UNFOLLOW_SUCCESS, UNFOLLOW_FAILURE,
+    LOAD_USER_REQUEST, LOAD_USER_SUCCESS, LOAD_USER_FAILURE,
+    CHANGE_NICKNAME_REQUEST, CHANGE_NICKNAME_FAILURE, CHANGE_NICKNAME_SUCCESS,
 } from '../reducers/user';
 
 // SAGA를 통해 백엔드 (port 3065에 요청)
-// axios보낼 https주소 saga index에 중복되는 부분 선언 
+// axios보낼 https주소 saga폴더 index에 중복되는 부분 변수로 묶어줌
+// withCredentials 공통설정 해줘서 자동으로 들어감
+
 function followAPI() {
-    return axios.post('/api/follow')
+    return axios.post('/follow')
 }
 
 function* follow(action) {
@@ -31,7 +35,7 @@ function* follow(action) {
 }
 
 function unfollowAPI() {
-    return axios.post('/api/unfollow')
+    return axios.post('/unfollow')
 }
 
 function* unfollow(action) {
@@ -47,6 +51,48 @@ function* unfollow(action) {
             type: UNFOLLOW_FAILURE,
             error: err.response.data,
         })
+    }
+}
+
+function changeNicknameAPI(data) {
+    return axios.patch('/user/nickname', { nickname: data });
+};
+
+function* changeNickname(action) {
+    try {
+        const result = yield call(changeNicknameAPI, action.data);
+        console.log(result)
+        yield put({
+            type: CHANGE_NICKNAME_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        console.error(err);
+        yield put({
+            type: CHANGE_NICKNAME_FAILURE,
+            error: err.response.data,
+        });
+    }
+}
+
+function loadUserAPI(data) {
+    return axios.get('/user');
+};
+
+function* loadUser(action) {
+    try {
+        const result = yield call(loadUserAPI, action.data);
+        console.log(result)
+        yield put({
+            type: LOAD_USER_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        console.error(err);
+        yield put({
+            type: LOAD_USER_FAILURE,
+            error: err.response.data,
+        });
     }
 }
 
@@ -74,13 +120,13 @@ function* logIn(action) {
             type: LOG_IN_SUCCESS,
             data: result.data,
             // data: action.data, 더미용
-        })
+        });
     } catch (err) {
         //성공은 result.data 실패는 err.response.data에 담긴다
         yield put({
             type: LOG_IN_FAILURE,
             error: err.response.data,
-        })
+        });
     }
 }
 
@@ -90,17 +136,16 @@ function logOutAPI() {
 
 function* logOut() {
     try {
-        // const result = yield call(logOutAPI)
-        yield delay(1000);
+        yield call(logOutAPI)
+        // yield delay(1000);
         yield put({
             type: LOG_OUT_SUCCESS,
-            // data: result.data
-        })
+        });
     } catch (err) {
         yield put({
             type: LOG_OUT_FAILURE,
             error: err.response.data,
-        })
+        });
     }
 }
 
@@ -113,18 +158,25 @@ function* signUp(action) {
     try {
         // action.data 넣어주면 signUpAPI에서 data받기 가능
         const result = yield call(signUpAPI, action.data)
+        console.log(result)
         // yield delay(1000);
         yield put({
             type: SIGN_UP_SUCCESS,
-        })
+        });
     } catch (err) {
         yield put({
             type: SIGN_UP_FAILURE,
             error: err.response.data,
-        })
+        });
     }
 }
 
+function* watchChangeNickname() {
+    yield takeLatest(CHANGE_NICKNAME_REQUEST, changeNickname);
+}
+function* watchLoadUser() {
+    yield takeLatest(LOAD_USER_REQUEST, loadUser);
+}
 function* watchFollow() {
     yield takeLatest(FOLLOW_REQUEST, follow);
 }
@@ -154,6 +206,8 @@ function* watchSignUp() {
 
 export default function* userSaga() {
     yield all([
+        fork(watchChangeNickname),
+        fork(watchLoadUser),
         fork(watchFollow),
         fork(watchUnfollow),
         fork(watchLogIn),

@@ -16,12 +16,20 @@ const ErrorMessage = styled.div`
 const Signup = () => {
   // 원할 때 dispatch로 Redux에서 꺼내오는 것
   const dispatch = useDispatch();
-  const { signUpLoading, signUpDone, signUpError } = useSelector((state: any) => state.user)
+  const { signUpLoading, signUpDone, signUpError, me } = useSelector((state: any) => state.user)
+
+  // 로그인 성공시 회원가입 페이지에서 나가도록
+  useEffect(() => {
+    if (me && me.id) {
+      // 뒤로가기 했을 때 그 페이지가 나오지 않기를 원한다면 push대신 replace
+      Router.replace('/');
+    }
+  }, [me && me.id]);
 
   // 회원가입 완료되면 메인페이지로 돌아감
   useEffect(() => {
     if (signUpDone) {
-      Router.push('/');
+      Router.replace('/');
     }
   }, [signUpDone]);
 

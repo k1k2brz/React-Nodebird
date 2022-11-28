@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import { Form, Input, Button } from 'antd'
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import Link from 'next/link'
 import useInput from '../hooks/useInput';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,9 +17,16 @@ const FormWrapper = styled(Form)`
 
 const LoginForm = () => {
     const dispatch = useDispatch();
-    const { logInLoading } = useSelector((state: any) => state.user);
+    const { logInLoading, logInError } = useSelector((state: any) => state.user);
     const [email, onChangeEmail] = useInput('');
     const [password, onChangePassword] = useInput('');
+
+    // 로그인 실패 이유 알 수 있게
+    useEffect(() => {
+        if (logInError) {
+            alert(logInError);
+        }
+    }, [logInError]);
 
     //컴포넌트에 props로 받아진 함수는 useCallback을 사용해야 최적화가 된다.
     // const onChangeId = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

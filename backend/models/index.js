@@ -1,8 +1,6 @@
-"use strict";
-
 const Sequelize = require("sequelize");
 const env = process.env.NODE_ENV || "development"; // 기본값 개발용
-const config = require(__dirname + "/../config/config.json")[env]; // config를 가져옴
+const config = require(__dirname + "/../config/config")[env]; // config를 가져옴
 // 합쳐서 config의 development를 가져옴
 const db = {};
 

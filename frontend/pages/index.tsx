@@ -5,16 +5,24 @@ import AppLayout from "../components/AppLayout";
 import PostCard from '../components/PostCard';
 import PostForm from '../components/PostForm';
 import { LOAD_POSTS_REQUEST } from '../reducers/post';
+import { LOAD_MY_INFO_REQUEST, LOAD_USER_REQUEST } from '../reducers/user';
 
 const Home = () => {
   const dispatch = useDispatch();
   const { me } = useSelector((state: any) => state.user);
   const { mainPosts, hasMorePosts, loadPostsLoading } = useSelector((state: any) => state.post);
+
   useEffect(() => {
     dispatch({
       type: LOAD_POSTS_REQUEST,
     });
   }, []);
+
+  useEffect(() => {
+    dispatch({
+      type: LOAD_USER_REQUEST,
+    })
+  }, [])
 
   useEffect(() => {
     function onScroll() {

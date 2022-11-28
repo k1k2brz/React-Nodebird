@@ -1,27 +1,74 @@
-import { all, fork, delay, put, takeEvery, takeLatest, throttle } from 'redux-saga/effects';
+import { all, fork, delay, put, takeEvery, takeLatest, throttle, call } from 'redux-saga/effects';
 import shortId from 'shortid';
 import axios from 'axios';
 import {
     ADD_COMMENT_FAILURE, ADD_COMMENT_REQUEST, ADD_COMMENT_SUCCESS,
-    ADD_POST_FAILURE, ADD_POST_REQUEST, ADD_POST_SUCCESS, generateDummyPost, LOAD_POSTS_FAILURE, LOAD_POSTS_REQUEST, LOAD_POSTS_SUCCESS, REMOVE_POST_FAILURE, REMOVE_POST_REQUEST, REMOVE_POST_SUCCESS,
+    ADD_POST_FAILURE, ADD_POST_REQUEST, ADD_POST_SUCCESS,
+    LIKE_POST_FAILURE, LIKE_POST_REQUEST, LIKE_POST_SUCCESS,
+    LOAD_POSTS_FAILURE, LOAD_POSTS_REQUEST, LOAD_POSTS_SUCCESS,
+    REMOVE_POST_FAILURE, REMOVE_POST_REQUEST, REMOVE_POST_SUCCESS,
+    UNLIKE_POST_FAILURE, UNLIKE_POST_REQUEST, UNLIKE_POST_SUCCESS,
 } from '../reducers/post';
 import { ADD_POST_TO_ME, REMOVE_POST_OF_ME } from '../reducers/user';
 
+function likePostAPI(data) {
+    // data가 ${}안에 들어가기 때문에 굳이 안넣어도 됨
+    return axios.patch(`/post/${data}/like`);
+}
+
+function* likePost(action) {
+    try {
+        const result = yield call(likePostAPI, action.data);
+        yield put({
+            type: LIKE_POST_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        console.error(err);
+        yield put({
+            type: LIKE_POST_FAILURE,
+            error: err.response.data,
+        });
+    }
+}
+
+function unlikePostAPI(data) {
+    return axios.delete(`/post/${data}/like`);
+}
+
+function* unlikePost(action) {
+    try {
+        const result = yield call(unlikePostAPI, action.data);
+        yield put({
+            type: UNLIKE_POST_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        console.error(err);
+        yield put({
+            type: UNLIKE_POST_FAILURE,
+            error: err.response.data,
+        });
+    }
+}
+
 function loadPostsAPI(data) {
-    return axios.get('/api/post', data)
+    return axios.get('/posts', data)
 }
 
 function* loadPosts(action) {
     try {
-        // const result = yield call(loadPostsAPI, action.data)
-        yield delay(1000);
-        const id = shortId.generate();
+        const result = yield call(loadPostsAPI, action.data)
+        console.log(result)
+        // yield delay(1000);
+        // const id = shortId.generate();
         yield put({
             type: LOAD_POSTS_SUCCESS,
-            // action.data에 작성한 글이 들어있음
-            data: generateDummyPost(10), // reducer에서 만든 함수
+            data: result.data,
+            // data: generateDummyPost(10), // reducer에서 만든 함수
         });
     } catch (err) {
+        console.error(err);
         yield put({
             type: LOAD_POSTS_FAILURE,
             data: err.response.data,
@@ -30,27 +77,28 @@ function* loadPosts(action) {
 }
 
 function addPostAPI(data) {
-    return axios.post('/api/post', data)
+    // req.body.content로 받을 수 있도록 이름을 붙여준다.
+    return axios.post('/post', { content: data })
 }
 
 function* addPost(action) {
     try {
-        // const result = yield call(addPostAPI, action.data)
-        yield delay(1000);
-        const id = shortId.generate();
+        const result = yield call(addPostAPI, action.data)
         yield put({
             type: ADD_POST_SUCCESS,
-            // action.data에 작성한 글이 들어있음
-            data: {
-                id,
-                content: action.data,
-            }
+            data: result.data,
+            // action.data에 작성한 글이 들어있음 (더미데이터)
+            // data: {
+            //     id,
+            //     content: action.data,
+            // }
         });
         yield put({
             type: ADD_POST_TO_ME,
-            data: id,
+            data: result.data.id,
         })
     } catch (err) {
+        console.error(err);
         yield put({
             type: ADD_POST_FAILURE,
             data: err.response.data,
@@ -59,28 +107,25 @@ function* addPost(action) {
 }
 
 function removePostAPI(data) {
-    return axios.delete('/api/post', data)
+    // delete는 2번째 자리에 data 못 넣는다
+    return axios.delete(`/post/${data}`);
 }
 
 function* removePost(action) {
     try {
-        // const result = yield call(removePostAPI, action.data)
-        yield delay(1000);
-        const id = shortId.generate();
+        const result = yield call(removePostAPI, action.data)
         // POST reducer 상태랑 user reducer상태랑 동시에 바꿀 수 없기 때문에 action이 2개가 나온다.
         yield put({
             type: REMOVE_POST_SUCCESS,
             // action.data에 작성한 글이 들어있음
-            data: {
-                id,
-                content: action.data,
-            }
+            data: result.data,
         });
         yield put({
             type: REMOVE_POST_OF_ME,
-            data: id,
+            data: action.data,
         })
     } catch (err) {
+        console.error(err);
         yield put({
             type: REMOVE_POST_FAILURE,
             data: err.response.data,
@@ -89,23 +134,34 @@ function* removePost(action) {
 }
 
 function addCommentAPI(data) {
-    // return axios.post(`/api/post/${data.postId}/comment`, data)
+    /** 쿠키를 같이 전달 해준다 (도메인이 다르면 쿠키도 전달이 안되니까 backend의 cors와 여기)
+     withCredentials: true로 쿠키전달 허용
+     */
+    return axios.post(`/post/${data.postId}/comment`, data) // POST /post/1/comment
 }
 
 function* addComment(action) {
     try {
-        // const result = yield call(addCommentAPI, action.data)
-        yield delay(1000);
+        const result = yield call(addCommentAPI, action.data)
         yield put({
             type: ADD_COMMENT_SUCCESS,
-            data: action.data
+            data: result.data
         })
     } catch (err) {
+        console.error(err);
         yield put({
             type: ADD_COMMENT_FAILURE,
             data: err.response.data,
         })
     }
+}
+
+function* watchLikePost() {
+    yield takeLatest(LIKE_POST_REQUEST, likePost);
+}
+
+function* watchUnlikePost() {
+    yield takeLatest(UNLIKE_POST_REQUEST, unlikePost);
 }
 
 function* watchLoadPosts() {
@@ -127,6 +183,8 @@ function* watchAddComment() {
 
 export default function* postSaga() {
     yield all([
+        fork(watchLikePost),
+        fork(watchUnlikePost),
         fork(watchAddPost),
         fork(watchLoadPosts),
         fork(watchRemovePost),

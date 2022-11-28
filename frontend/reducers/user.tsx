@@ -3,6 +3,12 @@
 import produce from 'immer';
 
 export const initialState = {
+    loadMyInfoLoading: false, // 유저 정보 가져오기 시도중
+    loadMyInfoDone: false,
+    loadMyInfoError: null,
+    loadUserLoading: false, // 유저 정보 가져오기 시도중
+    loadUserDone: false,
+    loadUserError: null,
     followLoading: false, // 팔로우 시도중
     followDone: false,
     followError: null,
@@ -21,12 +27,30 @@ export const initialState = {
     changeNicknameLoading: false, // 닉네임 변경 시도중
     changeNicknameDone: false,
     changeNicknameError: null,
+    loadFollowingsLoading: false,
+    loadFollowingsDone: false,
+    loadFollowingsError: null,
+    loadFollowersLoading: false,
+    loadFollowersDone: false,
+    loadFollowersError: null,
+    removeFollowerLoading: false,
+    removeFollowerDone: false,
+    removeFollowerError: null,
     me: null,
+    userInfo: null,
     signUpData: {},
     loginData: {},
 };
 
 // 다른 파일에서도 써야하니까 export
+export const LOAD_MY_INFO_REQUEST = 'LOAD_MY_INFO_REQUEST' as const;
+export const LOAD_MY_INFO_SUCCESS = 'LOAD_MY_INFO_SUCCESS' as const;
+export const LOAD_MY_INFO_FAILURE = 'LOAD_MY_INFO_FAILURE' as const;
+
+export const LOAD_USER_REQUEST = 'LOAD_USER_REQUEST' as const;
+export const LOAD_USER_SUCCESS = 'LOAD_USER_SUCCESS' as const;
+export const LOAD_USER_FAILURE = 'LOAD_USER_FAILURE' as const;
+
 export const LOG_IN_REQUEST = 'LOG_IN_REQUEST' as const;
 export const LOG_IN_SUCCESS = 'LOG_IN_SUCCESS' as const;
 export const LOG_IN_FAILURE = 'LOG_IN_FAILURE' as const;
@@ -51,20 +75,32 @@ export const UNFOLLOW_REQUEST = 'UNFOLLOW_REQUEST' as const;
 export const UNFOLLOW_SUCCESS = 'UNFOLLOW_SUCCESS' as const;
 export const UNFOLLOW_FAILURE = 'UNFOLLOW_FAILURE' as const;
 
+export const REMOVE_FOLLOWER_REQUEST = 'REMOVE_FOLLOWER_REQUEST' as const;
+export const REMOVE_FOLLOWER_SUCCESS = 'REMOVE_FOLLOWER_SUCCESS' as const;
+export const REMOVE_FOLLOWER_FAILURE = 'REMOVE_FOLLOWER_FAILURE' as const;
+
+export const LOAD_FOLLOWINGS_REQUEST = 'LOAD_FOLLOWINGS_REQUEST' as const;
+export const LOAD_FOLLOWINGS_SUCCESS = 'LOAD_FOLLOWINGS_SUCCESS' as const;
+export const LOAD_FOLLOWINGS_FAILURE = 'LOAD_FOLLOWINGS_FAILURE' as const;
+
+export const LOAD_FOLLOWERS_REQUEST = 'LOAD_FOLLOWERS_REQUEST' as const;
+export const LOAD_FOLLOWERS_SUCCESS = 'LOAD_FOLLOWERS_SUCCESS' as const;
+export const LOAD_FOLLOWERS_FAILURE = 'LOAD_FOLLOWERS_FAILURE' as const;
+
 // user reducer 상태를 바꿀 수 있는 action
 export const ADD_POST_TO_ME = 'ADD_POST_TO_ME' as const;
 export const REMOVE_POST_OF_ME = 'REMOVE_POST_OF_ME' as const;
 
 // Sequelize에서 합쳐준다
 // 중복되는 더미데이터 함수로 묶음
-const dummyUser = (data) => ({
-    ...data,
-    nickname: 'Violet',
-    id: 1,
-    Posts: [{ id: 1 }],
-    Followings: [{ nickname: 'dummy1' }, { nickname: 'dummy2' }, { nickname: 'dummy333' }],
-    Followers: [{ nickname: 'dummy1' }, { nickname: 'dummy2' }, { nickname: 'dummy333' }],
-})
+// const dummyUser = (data) => ({
+//     ...data,
+//     nickname: 'Violet',
+//     id: 1,
+//     Posts: [{ id: 1 }],
+//     Followings: [{ nickname: 'dummy1' }, { nickname: 'dummy2' }, { nickname: 'dummy333' }],
+//     Followers: [{ nickname: 'dummy1' }, { nickname: 'dummy2' }, { nickname: 'dummy333' }],
+// })
 
 export const loginRequestAction = (data) => ({
     type: LOG_IN_REQUEST,
@@ -77,6 +113,76 @@ export const logoutRequestAction = () => ({
 
 const reducer = (state = initialState, action) => produce(state, (draft) => {
     switch (action.type) {
+        case REMOVE_FOLLOWER_REQUEST:
+            draft.removeFollowerLoading = true;
+            draft.removeFollowerError = null;
+            draft.removeFollowerDone = false;
+            break;
+        case REMOVE_FOLLOWER_SUCCESS:
+            draft.removeFollowerLoading = false;
+            draft.me.Followers = draft.me.Followers.filter((v) => v.id !== action.data.UserId);
+            draft.removeFollowerDone = true;
+            break;
+        case REMOVE_FOLLOWER_FAILURE:
+            draft.removeFollowerLoading = false;
+            draft.removeFollowerError = action.error;
+            break;
+        case LOAD_FOLLOWINGS_REQUEST:
+            draft.loadFollowingsLoading = true;
+            draft.loadFollowingsError = null;
+            draft.loadFollowingsDone = false;
+            break;
+        case LOAD_FOLLOWINGS_SUCCESS:
+            draft.loadFollowingsLoading = false;
+            draft.me.Followings = action.data;
+            draft.loadFollowingsDone = true;
+            break;
+        case LOAD_FOLLOWINGS_FAILURE:
+            draft.loadFollowingsLoading = false;
+            draft.loadFollowingsError = action.error;
+            break;
+        case LOAD_FOLLOWERS_REQUEST:
+            draft.loadFollowersLoading = true;
+            draft.loadFollowersError = null;
+            draft.loadFollowersDone = false;
+            break;
+        case LOAD_FOLLOWERS_SUCCESS:
+            draft.loadFollowersLoading = false;
+            draft.me.Followers = action.data;
+            draft.loadFollowersDone = true;
+            break;
+        case LOAD_FOLLOWERS_FAILURE:
+            draft.loadFollowersLoading = false;
+            draft.loadFollowersError = action.error;
+            break;
+        case LOAD_MY_INFO_REQUEST:
+            draft.loadMyInfoLoading = true;
+            draft.loadMyInfoError = null;
+            draft.loadMyInfoDone = false;
+            break;
+        case LOAD_MY_INFO_SUCCESS:
+            draft.loadMyInfoLoading = false;
+            draft.me = action.data;
+            draft.loadMyInfoDone = true;
+            break;
+        case LOAD_MY_INFO_FAILURE:
+            draft.loadMyInfoLoading = false;
+            draft.loadMyInfoError = action.error;
+            break;
+        case LOAD_USER_REQUEST:
+            draft.loadUserLoading = true;
+            draft.loadUserError = null;
+            draft.loadUserDone = false;
+            break;
+        case LOAD_USER_SUCCESS:
+            draft.loadUserLoading = false;
+            draft.me = action.data;
+            draft.loadUserDone = true;
+            break;
+        case LOAD_USER_FAILURE:
+            draft.loadUserLoading = false;
+            draft.loadUserError = action.error;
+            break;
         case FOLLOW_REQUEST:
             draft.followLoading = true;
             draft.followError = null;
@@ -113,7 +219,7 @@ const reducer = (state = initialState, action) => produce(state, (draft) => {
             break;
         case LOG_IN_SUCCESS:
             draft.logInLoading = false;
-            draft.me = dummyUser(action.data);
+            draft.me = action.data;
             draft.logInDone = true;
             break;
         case LOG_IN_FAILURE:
@@ -153,6 +259,7 @@ const reducer = (state = initialState, action) => produce(state, (draft) => {
             draft.changeNicknameDone = false;
             break;
         case CHANGE_NICKNAME_SUCCESS:
+            draft.me.nickname = action.data.nickname;
             draft.changeNicknameLoading = false;
             draft.changeNicknameDone = true;
             break;

@@ -22,6 +22,13 @@ const FollowButton = ({ post }) => {
             })
         }
     }, [isFollowing])
+
+    // 내가 쓴 글 팔로잉 안보이게
+    // return을 hooks보다 위에 쓰면 에러남
+    if (post.User.id === me.id) {
+        return null;
+    }
+
     return <Button loading={followLoading || unfollowLoading} onClick={onClickButton}>
         {isFollowing ? '언팔로우' : '팔로우'}
     </Button>
