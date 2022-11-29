@@ -3,7 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     "Image",
     {
       content: {
-        type: DataTypes.STRING(200), // 이미지는 url이라 길어질 수 있기 때문에 200자
+        type: DataTypes.STRING(300), // 이미지는 url이라 길어질 수 있기 때문에 200자
         allowNull: false,
       },
     },

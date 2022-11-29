@@ -2,7 +2,7 @@
 // import type { AppProps /*, AppContext */ } from 'next/app'
 
 import Head from "next/head";
-// import PropTypes from "prop-types";
+import PropTypes from "prop-types";
 
 import wrapper from '../store/configureStore';
 
@@ -22,8 +22,8 @@ const NodeBird: React.FC<Props> = ({ Component }) => {
     );
 };
 
-// NodeBird.propTypes = {
-//   Component: PropTypes.elementType.isRequired,
-// };
+NodeBird.propTypes = {
+    Component: PropTypes.elementType.isRequired,
+};
 
 export default wrapper.withRedux(NodeBird);

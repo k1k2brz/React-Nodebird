@@ -190,7 +190,7 @@ const reducer = (state = initialState, action) => produce(state, (draft) => {
             break;
         case FOLLOW_SUCCESS:
             draft.followLoading = false;
-            draft.me.Followings.push({ id: action.data });
+            draft.me.Followings.push({ id: action.data.UserId });
             draft.followDone = true;
             break;
         case FOLLOW_FAILURE:
@@ -205,7 +205,7 @@ const reducer = (state = initialState, action) => produce(state, (draft) => {
         case UNFOLLOW_SUCCESS:
             draft.unfollowLoading = false;
             // 언팔한 사람 제외
-            draft.me.Followings = draft.me.Followings.filter((v) => v.id !== action.data);
+            draft.me.Followings = draft.me.Followings.filter((v) => v.id !== action.data.UserId);
             draft.unfollowDone = true;
             break;
         case UNFOLLOW_FAILURE:

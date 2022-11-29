@@ -8,6 +8,7 @@ const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
+const path = require("path");
 
 const postRouter = require("./routes/post");
 const postsRouter = require("./routes/posts");
@@ -41,8 +42,13 @@ app.use(
     credentials: true,
   })
 );
+// 맨 앞은 localhost3065/가 됨 (PostForm 이미지 경로랑 같게 맞춰주면 된다)
+// 윈도우는 경로가 \지만 맥이나 리눅스는 /라서 path.join으로 맞춰주는게 좋다.
+app.use("/", express.static(path.join(__dirname, "uploads")));
+// axios로 데이터 보낼 때
 app.use(express.json()); // middleware
 // req.body가 들어있는 상태 (순서 중요)
+// 일반 폼으로 보낼 때 이거로 받음
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(
@@ -65,8 +71,8 @@ app.get("/", (req, res) => {
 
 // 프리픽스
 // API는 다른 서비스가 내 서비스의 기능을 실행할 수 있게 열어둔 창구
-app.use("/posts", postsRouter);
 app.use("/post", postRouter);
+app.use("/posts", postsRouter);
 app.use("/user", userRouter);
 
 // 에러처리 미들웨어 들어가는 부분

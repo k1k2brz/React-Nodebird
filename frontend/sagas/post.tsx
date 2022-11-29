@@ -7,9 +7,53 @@ import {
     LIKE_POST_FAILURE, LIKE_POST_REQUEST, LIKE_POST_SUCCESS,
     LOAD_POSTS_FAILURE, LOAD_POSTS_REQUEST, LOAD_POSTS_SUCCESS,
     REMOVE_POST_FAILURE, REMOVE_POST_REQUEST, REMOVE_POST_SUCCESS,
+    RETWEET_FAILURE, RETWEET_REQUEST, RETWEET_SUCCESS,
     UNLIKE_POST_FAILURE, UNLIKE_POST_REQUEST, UNLIKE_POST_SUCCESS,
+    UPLOAD_IMAGES_FAILURE, UPLOAD_IMAGES_REQUEST, UPLOAD_IMAGES_SUCCESS,
 } from '../reducers/post';
 import { ADD_POST_TO_ME, REMOVE_POST_OF_ME } from '../reducers/user';
+
+function retweetAPI(data) {
+    // formData는 { data }이런식으로 감싸버리면 json이 되니까 {}적지 말 것
+    return axios.post(`/post/${data}/retweet`);
+}
+
+function* retweet(action) {
+    try {
+        const result = yield call(retweetAPI, action.data);
+        yield put({
+            type: RETWEET_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        console.error(err);
+        yield put({
+            type: RETWEET_FAILURE,
+            error: err.response.data,
+        });
+    }
+}
+
+function uploadImagesAPI(data) {
+    // formData는 { data }이런식으로 감싸버리면 json이 되니까 {}적지 말 것
+    return axios.post('/post/images', data);
+}
+
+function* uploadImages(action) {
+    try {
+        const result = yield call(uploadImagesAPI, action.data);
+        yield put({
+            type: UPLOAD_IMAGES_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        console.error(err);
+        yield put({
+            type: UPLOAD_IMAGES_FAILURE,
+            error: err.response.data,
+        });
+    }
+}
 
 function likePostAPI(data) {
     // data가 ${}안에 들어가기 때문에 굳이 안넣어도 됨
@@ -52,14 +96,16 @@ function* unlikePost(action) {
     }
 }
 
-function loadPostsAPI(data) {
-    return axios.get('/posts', data)
+function loadPostsAPI(lastId) {
+    // get의 두번째 자리는 withcredentials
+    // GET 쿼리 스트링으로 주소에 데이터 포함시키는 방법 (주소 캐싱)
+    // 주소창 쿼리 스트링이 없으면 0
+    return axios.get(`/posts?lastId=${lastId || 0}`)
 }
 
 function* loadPosts(action) {
     try {
-        const result = yield call(loadPostsAPI, action.data)
-        console.log(result)
+        const result = yield call(loadPostsAPI, action.lastId)
         // yield delay(1000);
         // const id = shortId.generate();
         yield put({
@@ -71,14 +117,14 @@ function* loadPosts(action) {
         console.error(err);
         yield put({
             type: LOAD_POSTS_FAILURE,
-            data: err.response.data,
+            error: err.response.data,
         })
     }
 }
 
 function addPostAPI(data) {
-    // req.body.content로 받을 수 있도록 이름을 붙여준다.
-    return axios.post('/post', { content: data })
+    // 2번째 자리에 req.body.content로 받을 수 있도록 { content: data }처럼 이름을 붙여줄 수 있다.
+    return axios.post('/post', data)
 }
 
 function* addPost(action) {
@@ -101,7 +147,7 @@ function* addPost(action) {
         console.error(err);
         yield put({
             type: ADD_POST_FAILURE,
-            data: err.response.data,
+            error: err.response.data,
         })
     }
 }
@@ -128,7 +174,7 @@ function* removePost(action) {
         console.error(err);
         yield put({
             type: REMOVE_POST_FAILURE,
-            data: err.response.data,
+            error: err.response.data,
         })
     }
 }
@@ -151,9 +197,18 @@ function* addComment(action) {
         console.error(err);
         yield put({
             type: ADD_COMMENT_FAILURE,
-            data: err.response.data,
+            error: err.response.data,
         })
     }
+}
+
+
+function* watchRetweet() {
+    yield takeLatest(RETWEET_REQUEST, retweet);
+}
+
+function* watchUploadImages() {
+    yield takeLatest(UPLOAD_IMAGES_REQUEST, uploadImages);
 }
 
 function* watchLikePost() {
@@ -183,6 +238,8 @@ function* watchAddComment() {
 
 export default function* postSaga() {
     yield all([
+        fork(watchRetweet),
+        fork(watchUploadImages),
         fork(watchLikePost),
         fork(watchUnlikePost),
         fork(watchAddPost),

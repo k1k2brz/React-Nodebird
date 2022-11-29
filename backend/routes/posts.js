@@ -1,5 +1,6 @@
 // post여러개 부를 때
 const express = require("express");
+const { Op } = require("sequelize");
 
 const { Post, User, Image, Comment } = require("../models");
 
@@ -8,7 +9,16 @@ const router = express.Router();
 router.get("/", async (req, res, next) => {
   //GET /posts
   try {
+    const where = {};
+    // 쿼리 스트링이라 query.lastId에 들어있음
+    // 초기 로딩이 아닐 때
+    if (parseInt(req.query.lastId, 10)) {
+      // Op.lt = lastId보다 작은 10개를 불러와라 (Op는 시퀄라이즈 내장)
+      where.id = { [Op.lt]: parseInt(req.query.lastId, 10) };
+    } // 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
     const posts = await Post.findAll({
+      // where이 게시글 가져오는 것에 대한 조건 (없으면 최신글 10개를 계속 보여준다.)
+      where,
       // lastId는 고정되기 때문에 게시글 추가 삭제 할 때 문제가 생기지 않음
       //   where: { id: lastId },
       // limit: 10개만 가져오라는 명령어
@@ -44,7 +54,7 @@ router.get("/", async (req, res, next) => {
           attributes: ["id"],
         },
         {
-          model: Post,
+          model: Post, // 리트윗
           as: "Retweet",
           include: [
             {

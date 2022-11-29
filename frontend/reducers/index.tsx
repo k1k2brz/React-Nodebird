@@ -6,7 +6,7 @@ import { combineReducers } from '@reduxjs/toolkit';
 
 // const initialState = {
 //     name: 'taeil',
-//     age: 30,
+//     age: 111,
 //     password: 'babo'
 // }
 
@@ -24,18 +24,35 @@ import { combineReducers } from '@reduxjs/toolkit';
 
 // (이전상태, 액션) => 다음상태
 // combineReducers로 user, post 합쳐준다
-const rootReducer = combineReducers({
-    // hydrate를 넣기 위해 index reducer 추가 (서버사이드 렌더링을 위해서)
-    index: (state: Object = {}, action) => {
-        switch (action.type) {
-            case HYDRATE:
-                return { ...state, ...action.payload };
-            default:
-                return state;
+// const rootReducer = combineReducers({
+//     // hydrate를 넣기 위해 index reducer 추가 (서버사이드 렌더링을 위해서)
+//     index: (state: Object = {}, action) => {
+//         switch (action.type) {
+//             case HYDRATE:
+//                 return { ...state, ...action.payload };
+//             default:
+//                 return state;
+//         }
+//     },
+//     user,
+//     post,
+// })
+
+// (이전상태, 액션) => 다음상태
+const rootReducer = (state, action) => {
+    // 전체를 덮어 씌울 수 있게 만들어주기 위해 바꾼 코드
+    switch (action.type) {
+        case HYDRATE:
+            console.log('HYDTATE', action);
+            return action.payload;
+        default: {
+            const combinedReducer = combineReducers({
+                user,
+                post,
+            });
+            return combinedReducer(state, action)
         }
-    },
-    user,
-    post,
-})
+    }
+}
 
 export default rootReducer;

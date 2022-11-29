@@ -24,6 +24,12 @@ export type mainPost = {
     removePostLoading: boolean,
     removePostDone: boolean,
     removePostError: boolean,
+    uploadImagesLoading: boolean,
+    uploadImagesDone: boolean,
+    uploadImagesError: boolean,
+    retweetLoading: boolean,
+    retweetDone: boolean,
+    retweetError: boolean,
 }
 
 export const initialState: mainPost = {
@@ -82,6 +88,12 @@ export const initialState: mainPost = {
     addCommentLoading: false,
     addCommentDone: false,
     addCommentError: null,
+    uploadImagesLoading: false,
+    uploadImagesDone: false,
+    uploadImagesError: null,
+    retweetLoading: false,
+    retweetDone: false,
+    retweetError: null,
 }
 
 // infinite scrolling
@@ -109,6 +121,10 @@ export const initialState: mainPost = {
 // as const를 지정하면 타입이 아니라 실제 값을 가리키게 됨
 
 // 화면 로딩하면
+export const UPLOAD_IMAGES_REQUEST = 'UPLOAD_IMAGES_REQUEST' as const;
+export const UPLOAD_IMAGES_SUCCESS = 'UPLOAD_IMAGES_SUCCESS' as const;
+export const UPLOAD_IMAGES_FAILURE = 'UPLOAD_IMAGES_FAILURE' as const;
+
 export const LIKE_POST_REQUEST = 'LIKE_POST_REQUEST' as const;
 export const LIKE_POST_SUCCESS = 'LIKE_POST_SUCCESS' as const;
 export const LIKE_POST_FAILURE = 'LIKE_POST_FAILURE' as const;
@@ -132,6 +148,13 @@ export const REMOVE_POST_FAILURE = 'REMOVE_POST_FAILURE' as const;
 export const ADD_COMMENT_REQUEST = 'ADD_COMMENT_REQUEST' as const;
 export const ADD_COMMENT_SUCCESS = 'ADD_COMMENT_SUCCESS' as const;
 export const ADD_COMMENT_FAILURE = 'ADD_COMMENT_FAILURE' as const;
+
+export const RETWEET_REQUEST = 'RETWEET_REQUEST' as const;
+export const RETWEET_SUCCESS = 'RETWEET_SUCCESS' as const;
+export const RETWEET_FAILURE = 'RETWEET_FAILURE' as const;
+
+// 동기 액션은 하나만 만들면 된다
+export const REMOVE_IMAGE = 'REMOVE_IMAGE' as const;
 
 export const addPost = (data) => ({
     type: ADD_POST_REQUEST,
@@ -173,6 +196,42 @@ const reducer = (state: mainPost = initialState, action: any) => {
     // immer 사용
     return produce(state, (draft) => {
         switch (action.type) {
+            case RETWEET_REQUEST:
+                draft.retweetLoading = true;
+                draft.retweetDone = false;
+                draft.retweetError = null;
+                break;
+            case RETWEET_SUCCESS:
+                draft.retweetLoading = false;
+                draft.retweetDone = true;
+                break;
+            case RETWEET_FAILURE:
+                draft.retweetLoading = false;
+                draft.retweetError = action.error;
+                break;
+            default:
+                break;
+            // 서버에서 이미지를 지우고 싶으면 비동기로 만들어줘야 한다.
+            // 서버에서 이미지를 안지우는 이유는 머신러닝 등을 위해 데이터 수집을 할 수도 있어서
+            case REMOVE_IMAGE:
+                draft.imagePaths = draft.imagePaths.filter((v, i) => i !== action.data)
+                break;
+            case UPLOAD_IMAGES_REQUEST:
+                draft.uploadImagesLoading = true;
+                draft.uploadImagesDone = false;
+                draft.uploadImagesError = null;
+                break;
+            case UPLOAD_IMAGES_SUCCESS: {
+                // 데이터들 여기 저장
+                draft.imagePaths = action.data;
+                draft.uploadImagesLoading = false;
+                draft.uploadImagesDone = true;
+                break;
+            }
+            case UPLOAD_IMAGES_FAILURE:
+                draft.uploadImagesLoading = false;
+                draft.uploadImagesError = action.error;
+                break;
             case LIKE_POST_REQUEST:
                 draft.likePostLoading = true;
                 draft.likePostDone = false;
@@ -213,6 +272,7 @@ const reducer = (state: mainPost = initialState, action: any) => {
             case LOAD_POSTS_SUCCESS:
                 draft.loadPostsLoading = false;
                 draft.loadPostsDone = true;
+                // 로딩이 밑에 무한로딩이 추가되어야 하니까 action.data를 뒤에 추가
                 draft.mainPosts = draft.mainPosts.concat(action.data);
                 draft.hasMorePosts = action.data.length === 10;
                 break;
@@ -288,8 +348,6 @@ const reducer = (state: mainPost = initialState, action: any) => {
             case ADD_COMMENT_FAILURE:
                 draft.addCommentLoading = false;
                 draft.addCommentError = action.error;
-                break;
-            default:
                 break;
         }
     });
