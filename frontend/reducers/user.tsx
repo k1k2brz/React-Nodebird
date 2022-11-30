@@ -38,8 +38,8 @@ export const initialState = {
     removeFollowerError: null,
     me: null,
     userInfo: null,
-    signUpData: {},
-    loginData: {},
+    // signUpData: {},
+    // loginData: {},
 };
 
 // 다른 파일에서도 써야하니까 export
@@ -176,7 +176,8 @@ const reducer = (state = initialState, action) => produce(state, (draft) => {
             break;
         case LOAD_USER_SUCCESS:
             draft.loadUserLoading = false;
-            draft.me = action.data;
+            // 상대방 정보(다른사람 정보)
+            draft.userInfo = action.data;
             draft.loadUserDone = true;
             break;
         case LOAD_USER_FAILURE:

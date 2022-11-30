@@ -25,7 +25,7 @@ const upload = multer({
       done(null, "uploads");
     },
     filename(req, file, done) {
-      // 제로초.png
+      // 이미지이름.png
       // 파일 이름 중복시 덮어씌어지는 문제 방지 (파일 올린 시간까지 나오게)
       const ext = path.extname(file.originalname); // 확장자 추출(.png)
       const basename = path.basename(file.originalname, ext); // 사용자
@@ -63,7 +63,6 @@ router.post("/", isLoggedIn, upload.none(), async (req, res, next) => {
         // Promise.all로 업로드 폴더에 전부 보냄 / db에는 파일 주소가(주소만) 보내진다.
         // 파일을 db에 보내면 느리고 캐싱도 못하기 때문
         const images = await Promise.all(req.body.image.map((image) => Image.create({ src: image })));
-        console.log(images);
         await post.addImages(images);
         // 이미지를 하나만 올린 경우 image: 주사위.png
       } else {
@@ -114,6 +113,42 @@ router.post("/images", isLoggedIn, upload.array("image"), (req, res, next) => {
   // POST /post/images
   console.log(req.files);
   res.json(req.files.map((v) => v.filename));
+});
+
+router.get("/:postId", async (req, res, next) => {
+  try {
+    const post = await Post.findOne({
+      where: { id: req.params.postId },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "nickname"],
+        },
+        {
+          model: Image,
+        },
+        {
+          model: Comment,
+          include: [
+            {
+              model: User,
+              attributes: ["id", "nickname"],
+              order: [["createdAt", "DESC"]],
+            },
+          ],
+        },
+        {
+          model: User, // 좋아요 누른 사람
+          as: "Likers",
+          attributes: ["id"],
+        },
+      ],
+    });
+    res.status(200).json(post);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
 });
 
 router.post("/:postId/retweet", isLoggedIn, async (req, res, next) => {

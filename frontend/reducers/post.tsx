@@ -4,6 +4,7 @@ import produce from 'immer';
 
 export type mainPost = {
     mainPosts: any,
+    singlePost: any,
     imagePaths: object[],
     likePostLoading: boolean,
     likePostDone: boolean,
@@ -18,6 +19,9 @@ export type mainPost = {
     addCommentDone: boolean,
     addCommentError: boolean,
     hasMorePosts: boolean,
+    loadPostLoading: boolean,
+    loadPostDone: boolean,
+    loadPostError: boolean,
     loadPostsLoading: boolean,
     loadPostsDone: boolean,
     loadPostsError: boolean,
@@ -68,8 +72,9 @@ export const initialState: mainPost = {
     //     }]
     // }
     mainPosts: [],
+    singlePost: null,
     imagePaths: [],
-    hasMorePosts: true, // infinite scroll
+    hasMorePosts: true, // 무한 스크롤
     likePostLoading: false,
     likePostDone: false,
     likePostError: null,
@@ -88,6 +93,9 @@ export const initialState: mainPost = {
     addCommentLoading: false,
     addCommentDone: false,
     addCommentError: null,
+    loadPostLoading: false,
+    loadPostDone: false,
+    loadPostError: null,
     uploadImagesLoading: false,
     uploadImagesDone: false,
     uploadImagesError: null,
@@ -132,6 +140,19 @@ export const LIKE_POST_FAILURE = 'LIKE_POST_FAILURE' as const;
 export const UNLIKE_POST_REQUEST = 'UNLIKE_POST_REQUEST' as const;
 export const UNLIKE_POST_SUCCESS = 'UNLIKE_POST_SUCCESS' as const;
 export const UNLIKE_POST_FAILURE = 'UNLIKE_POST_FAILURE' as const;
+
+export const LOAD_POST_REQUEST = 'LOAD_POST_REQUEST' as const;
+export const LOAD_POST_SUCCESS = 'LOAD_POST_SUCCESS' as const;
+export const LOAD_POST_FAILURE = 'LOAD_POST_FAILURE' as const;
+
+// 특정 유저 찾기
+export const LOAD_USER_POSTS_REQUEST = 'LOAD_USER_POSTS_REQUEST' as const;
+export const LOAD_USER_POSTS_SUCCESS = 'LOAD_USER_POSTS_SUCCESS' as const;
+export const LOAD_USER_POSTS_FAILURE = 'LOAD_USER_POSTS_FAILURE' as const;
+
+export const LOAD_HASHTAG_POSTS_REQUEST = 'LOAD_HASHTAG_POSTS_REQUEST' as const;
+export const LOAD_HASHTAG_POSTS_SUCCESS = 'LOAD_HASHTAG_POSTS_SUCCESS' as const;
+export const LOAD_HASHTAG_POSTS_FAILURE = 'LOAD_HASHTAG_POSTS_FAILURE' as const;
 
 export const LOAD_POSTS_REQUEST = 'LOAD_POSTS_REQUEST' as const;
 export const LOAD_POSTS_SUCCESS = 'LOAD_POSTS_SUCCESS' as const;
@@ -264,11 +285,31 @@ const reducer = (state: mainPost = initialState, action: any) => {
                 draft.unlikePostLoading = false;
                 draft.unlikePostError = action.error;
                 break;
+            case LOAD_POST_REQUEST:
+                draft.loadPostLoading = true;
+                draft.loadPostDone = false;
+                draft.loadPostError = null;
+                break;
+            case LOAD_POST_SUCCESS:
+                draft.loadPostLoading = false;
+                draft.loadPostDone = true;
+                // 게시글 넘버링
+                draft.singlePost = action.data;
+                break;
+            case LOAD_POST_FAILURE:
+                draft.loadPostLoading = false;
+                draft.loadPostError = action.error;
+                break;
+            // 한 페이지에서 액션이 같이 사용되지 않는다면 공유 가능
+            case LOAD_USER_POSTS_REQUEST:
             case LOAD_POSTS_REQUEST:
+            case LOAD_HASHTAG_POSTS_REQUEST:
                 draft.loadPostsLoading = true;
                 draft.loadPostsDone = false;
                 draft.loadPostsError = null;
                 break;
+            case LOAD_USER_POSTS_SUCCESS:
+            case LOAD_HASHTAG_POSTS_SUCCESS:
             case LOAD_POSTS_SUCCESS:
                 draft.loadPostsLoading = false;
                 draft.loadPostsDone = true;
@@ -276,6 +317,8 @@ const reducer = (state: mainPost = initialState, action: any) => {
                 draft.mainPosts = draft.mainPosts.concat(action.data);
                 draft.hasMorePosts = action.data.length === 10;
                 break;
+            case LOAD_USER_POSTS_FAILURE:
+            case LOAD_HASHTAG_POSTS_FAILURE:
             case LOAD_POSTS_FAILURE:
                 draft.loadPostsLoading = false;
                 draft.loadPostsError = action.error;

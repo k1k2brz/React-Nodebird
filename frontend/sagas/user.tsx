@@ -15,6 +15,9 @@ import {
     REMOVE_FOLLOWER_REQUEST,
     LOAD_FOLLOWERS_REQUEST,
     LOAD_FOLLOWINGS_REQUEST,
+    LOAD_MY_INFO_REQUEST,
+    LOAD_MY_INFO_SUCCESS,
+    LOAD_MY_INFO_FAILURE,
 } from '../reducers/user';
 
 // SAGA를 통해 백엔드 (port 3065에 요청)
@@ -142,7 +145,7 @@ function* changeNickname(action) {
 }
 
 function loadUserAPI(data) {
-    return axios.get('/user');
+    return axios.get(`/user/${data}`);
 };
 
 function* loadUser(action) {
@@ -157,6 +160,27 @@ function* loadUser(action) {
         console.error(err);
         yield put({
             type: LOAD_USER_FAILURE,
+            error: err.response.data,
+        });
+    }
+}
+
+function loadMyInfoAPI() {
+    return axios.get('/user');
+};
+
+function* loadMyInfo() {
+    try {
+        const result = yield call(loadMyInfoAPI);
+        console.log(result)
+        yield put({
+            type: LOAD_MY_INFO_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        console.error(err);
+        yield put({
+            type: LOAD_MY_INFO_FAILURE,
             error: err.response.data,
         });
     }
@@ -254,6 +278,9 @@ function* watchChangeNickname() {
 function* watchLoadUser() {
     yield takeLatest(LOAD_USER_REQUEST, loadUser);
 }
+function* watchLoadMyInfo() {
+    yield takeLatest(LOAD_MY_INFO_REQUEST, loadMyInfo);
+}
 function* watchFollow() {
     yield takeLatest(FOLLOW_REQUEST, follow);
 }
@@ -288,6 +315,7 @@ export default function* userSaga() {
         fork(watchLoadFollowings),
         fork(watchChangeNickname),
         fork(watchLoadUser),
+        fork(watchLoadMyInfo),
         fork(watchFollow),
         fork(watchUnfollow),
         fork(watchLogIn),

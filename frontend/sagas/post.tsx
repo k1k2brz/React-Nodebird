@@ -1,11 +1,14 @@
-import { all, fork, delay, put, takeEvery, takeLatest, throttle, call } from 'redux-saga/effects';
-import shortId from 'shortid';
+import { all, fork, put, takeLatest, throttle, call } from 'redux-saga/effects';
+// import shortId from 'shortid';
 import axios from 'axios';
 import {
     ADD_COMMENT_FAILURE, ADD_COMMENT_REQUEST, ADD_COMMENT_SUCCESS,
     ADD_POST_FAILURE, ADD_POST_REQUEST, ADD_POST_SUCCESS,
     LIKE_POST_FAILURE, LIKE_POST_REQUEST, LIKE_POST_SUCCESS,
+    LOAD_HASHTAG_POSTS_FAILURE, LOAD_HASHTAG_POSTS_REQUEST, LOAD_HASHTAG_POSTS_SUCCESS,
     LOAD_POSTS_FAILURE, LOAD_POSTS_REQUEST, LOAD_POSTS_SUCCESS,
+    LOAD_POST_FAILURE, LOAD_POST_REQUEST, LOAD_POST_SUCCESS,
+    LOAD_USER_POSTS_FAILURE, LOAD_USER_POSTS_REQUEST, LOAD_USER_POSTS_SUCCESS,
     REMOVE_POST_FAILURE, REMOVE_POST_REQUEST, REMOVE_POST_SUCCESS,
     RETWEET_FAILURE, RETWEET_REQUEST, RETWEET_SUCCESS,
     UNLIKE_POST_FAILURE, UNLIKE_POST_REQUEST, UNLIKE_POST_SUCCESS,
@@ -93,6 +96,69 @@ function* unlikePost(action) {
             type: UNLIKE_POST_FAILURE,
             error: err.response.data,
         });
+    }
+}
+
+function loadPostAPI(data) {
+    return axios.get(`/post/${data}`);
+}
+
+function* loadPost(action) {
+    try {
+        const result = yield call(loadPostAPI, action.data);
+        yield put({
+            type: LOAD_POST_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        console.error(err);
+        yield put({
+            type: LOAD_POST_FAILURE,
+            data: err.response.data,
+        });
+    }
+}
+
+function loadHashtagPostsAPI(data, lastId) {
+    // encodeURIComponent - 주소창에 한글 들어가서 에러나는거 방지
+    // 나중에 decodeURIComponent 하면 원래대로 돌아온다.
+    console.log(data, lastId)
+    return axios.get(`/hashtag/${encodeURIComponent(data)}?lastId=${lastId || 0}`);
+}
+
+function* loadHashtagPosts(action) {
+    try {
+        const result = yield call(loadHashtagPostsAPI, action.data, action.lastId);
+        yield put({
+            type: LOAD_HASHTAG_POSTS_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        console.error(err);
+        yield put({
+            type: LOAD_HASHTAG_POSTS_FAILURE,
+            data: err.response.data,
+        });
+    }
+}
+
+function loadUserPostsAPI(data, lastId) {
+    return axios.get(`/user/${data}/posts?lastId=${lastId || 0}`)
+}
+
+function* loadUserPosts(action) {
+    try {
+        const result = yield call(loadUserPostsAPI, action.data, action.lastId)
+        yield put({
+            type: LOAD_USER_POSTS_SUCCESS,
+            data: result.data,
+        });
+    } catch (err) {
+        console.error(err);
+        yield put({
+            type: LOAD_USER_POSTS_FAILURE,
+            error: err.response.data,
+        })
     }
 }
 
@@ -219,14 +285,30 @@ function* watchUnlikePost() {
     yield takeLatest(UNLIKE_POST_REQUEST, unlikePost);
 }
 
+function* watchLoadPost() {
+    yield takeLatest(LOAD_POST_REQUEST, loadPost);
+}
+
+function* watchLoadHashtagPosts() {
+    yield throttle(3000, LOAD_HASHTAG_POSTS_REQUEST, loadHashtagPosts);
+}
+
+function* watchLoadUserPosts() {
+    yield throttle(3000, LOAD_USER_POSTS_REQUEST, loadUserPosts);
+}
+
 function* watchLoadPosts() {
-    // 무한스크롤 이벤트 대량발생 방지
-    yield throttle(2000, LOAD_POSTS_REQUEST, loadPosts);
+    // 무한 스크롤 이벤 대량 발생 방지
+    yield throttle(3000, LOAD_POSTS_REQUEST, loadPosts);
 }
 
 function* watchAddPost() {
     yield takeLatest(ADD_POST_REQUEST, addPost);
 }
+
+// function* watchUpdatePost() {
+//     yield takeLatest(UPDATE_POST_REQUEST, updatePost);
+//   }
 
 function* watchRemovePost() {
     yield takeLatest(REMOVE_POST_REQUEST, removePost);
@@ -243,8 +325,12 @@ export default function* postSaga() {
         fork(watchLikePost),
         fork(watchUnlikePost),
         fork(watchAddPost),
+        fork(watchLoadPost),
+        fork(watchLoadUserPosts),
+        fork(watchLoadHashtagPosts),
         fork(watchLoadPosts),
+        // fork(watchUpdatePost),
         fork(watchRemovePost),
         fork(watchAddComment),
-    ])
+    ]);
 }

@@ -2,8 +2,8 @@ module.exports = (sequelize, DataTypes) => {
   const Image = sequelize.define(
     "Image",
     {
-      content: {
-        type: DataTypes.STRING(300), // 이미지는 url이라 길어질 수 있기 때문에 200자
+      src: {
+        type: DataTypes.STRING(200), // 이미지는 url이라 길어질 수 있기 때문에 200자
         allowNull: false,
       },
     },

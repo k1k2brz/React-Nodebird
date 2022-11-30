@@ -1,4 +1,5 @@
 // Next.js는 import React from 'react' 구문이 필요없음
+import axios from 'axios';
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { END } from 'redux-saga';
@@ -7,13 +8,14 @@ import AppLayout from "../components/AppLayout";
 import PostCard from '../components/PostCard';
 import PostForm from '../components/PostForm';
 import { LOAD_POSTS_REQUEST } from '../reducers/post';
-import { LOAD_USER_REQUEST } from '../reducers/user';
+import { LOAD_MY_INFO_REQUEST } from '../reducers/user';
 import wrapper from '../store/configureStore';
 
 const Home = () => {
   const dispatch = useDispatch();
   const { me } = useSelector((state: any) => state.user);
   const { mainPosts, hasMorePosts, loadPostsLoading, retweetError } = useSelector((state: any) => state.post);
+  console.log(mainPosts)
 
   // 리렌더링 에러로 상위에 올린 것
   useEffect(() => {
@@ -68,22 +70,32 @@ const Home = () => {
   );
 };
 
-// Next js
+// Next js - SSR
 // HOME 보다 먼저 실행된다.
-export const getServerSideProps = wrapper.getServerSideProps((store) => async ({ req }) => {
-  // const cookie = req ? req.headers.cookie : '';
-  // axios.defaults.headers.Cookie = '';
-  // if (req && cookie) {
-  //   axios.defaults.headers.Cookie = cookie;
-  // }
+// 서버쪽에서 작동되는 코드
+// 접속할 때 마다 상황에 따라 화면이 바껴야하면 getServerSideProps
+// 방문할 때 SSR한다
+export const getServerSideProps = wrapper.getServerSideProps((store): any => async ({ req }) => {
+  console.log('getServerSideProps start');
+  console.log(req.headers);
+  // 서버쪽으로 쿠키 전달하는 과정 (쿠키가 없으면 인식 못함)
+  const cookie = req ? req.headers.cookie : '';
+  axios.defaults.headers.Cookie = '';
+  // 다른 사람이 내 페이지에서 로그인 했을 때 내 쿠키때문에 내 아이디로 로그인 되는 현상 방지 (쿠키공유 방지)
+  if (req && cookie) {
+    axios.defaults.headers.Cookie = cookie;
+  }
   store.dispatch({
-    type: LOAD_USER_REQUEST,
+    type: LOAD_MY_INFO_REQUEST,
   });
-  // Next - redux 사용방법
+  store.dispatch({
+    type: LOAD_POSTS_REQUEST,
+  });
+  // Next - redux 사용방법 (공식문서)
   store.dispatch(END);
+  console.log('getServerSideProps end');
   await store.sagaTask.toPromise(); // store에 sagaTask
   // 실행된 결과 HYDRATE로 보낸다 (reducer index)
 })
-
 
 export default Home;
