@@ -1,6 +1,9 @@
+import React, { FC } from 'react'
 import { EllipsisOutlined, HeartOutlined, HeartTwoTone, MessageOutlined, RetweetOutlined } from '@ant-design/icons';
 import { Avatar, Button, Card, List, Popover, Comment } from 'antd';
 // import { Comment } from '@ant-design/compatible';
+import Link from 'next/link';
+import moment from 'moment';
 import { useDispatch, useSelector } from 'react-redux';
 import PostImages from './PostImages';
 import PropTypes from 'prop-types';
@@ -13,13 +16,36 @@ import {
 } from '../reducers/post';
 import FollowButton from './FollowButton';
 
-const PostCard = ({ post }) => {
+// 한글로
+moment.locale('ko');
+
+const PostCard: React.FC<any> = ({ post }) => {
     const dispatch = useDispatch();
     const { removePostLoading } = useSelector((state: any) => state.post);
     // const [liked, setLiked] = useState<boolean>(false);
     const [commentFormOpened, setCommentFormOpened] = useState<boolean>(false);
     // state.user.me && state.user.me.id 를 옵셔널 체이닝으로 줄여서
     const id = useSelector((state: any) => state.user.me?.id)
+    const [editMode, setEditMode] = useState<boolean>(false);
+
+    const onClickUpdate = useCallback(() => {
+        setEditMode(true);
+    }, []);
+
+    const onCancelUpdate = useCallback(() => {
+        setEditMode(false);
+    }, []);
+
+    //   const onChangePost = useCallback((editText) => () => {
+    //     dispatch({
+    //       type: UPDATE_POST_REQUEST,
+    //       data: {
+    //         PostId: post.id,
+    //         content: editText,
+    //       },
+    //     });
+    //   }, [post]);
+
 
     const onLike = useCallback(() => {
         if (!id) {
@@ -90,7 +116,7 @@ const PostCard = ({ post }) => {
                                     ? (
                                         <>
                                             <Button>수정</Button>
-                                            <Button type="danger"
+                                            <Button type="primary"
                                                 loading={removePostLoading}
                                                 onClick={onRemovePost}>삭제</Button>
                                         </>
@@ -109,17 +135,30 @@ const PostCard = ({ post }) => {
                 {post.RetweetId && post.Retweet ? (<Card
                     cover={post.Retweet.Images[0] && <PostImages images={post.Retweet.Images} />}
                 >
+                    <div style={{ float: 'right' }}>{moment(post.createdAt).format('YYYY.MM.DD')}</div>
                     <Card.Meta
-                        avatar={<Avatar>{post.Retweet.User.nickname[0]}</Avatar>}
+                        avatar={(
+                            <Link href={`/user/${post.Retweet.User.id}`} prefetch={false}>
+                                <Avatar>{post.Retweet.User.nickname[0]}</Avatar>
+                            </Link>
+                        )}
                         title={post.Retweet.User.nickname}
                         description={<PostCardContent postData={post.Retweet.content} />}
                     />
                 </Card>) : (
-                    <Card.Meta
-                        avatar={<Avatar>{post.User.nickname[0]}</Avatar>}
-                        title={post.User.nickname}
-                        description={<PostCardContent postData={post.content} />}
-                    />
+                    // 아바타 누르면 그 사람이 쓴 게시글 볼 수 있게
+                    <>
+                        <div style={{ float: 'right' }}>{moment(post.createdAt).format('YYYY.MM.DD')}</div>
+                        <Card.Meta
+                            avatar={(
+                                <Link href={`/user/${post.User.id}`} prefetch={false}>
+                                    <Avatar>{post.User.nickname[0]}</Avatar>
+                                </Link>
+                            )}
+                            title={post.User.nickname}
+                            description={<PostCardContent postData={post.content} />}
+                        />
+                    </>
                 )}
             </Card>
             {commentFormOpened && (
@@ -134,7 +173,11 @@ const PostCard = ({ post }) => {
                             <li>
                                 <Comment
                                     author={item.User.nickname}
-                                    avatar={<Avatar>{item.User.nickname[0]}</Avatar>}
+                                    avatar={(
+                                        <Link href={`/user/${item.User.id}`}>
+                                            <Avatar>{item.User.nickname[0]}</Avatar>
+                                        </Link>
+                                    )}
                                     content={item.content}
                                 />
                             </li>

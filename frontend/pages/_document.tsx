@@ -9,13 +9,11 @@ export default class MyDocument extends Document {
     static async getInitialProps(ctx: DocumentContext): Promise<DocumentInitialProps> {
         const sheet = new ServerStyleSheet();
         const originalRenderPage = ctx.renderPage;
-
         try {
-            // styled-component SSR
             ctx.renderPage = () => originalRenderPage({
-                enhanceApp: (App) => (props) => sheet.collectStyles(<App {...props} />)
+                enhanceApp: App => props => sheet.collectStyles(<App {...props} />),
             });
-            const initialProps: any = await Document.getInitialProps(ctx)
+            const initialProps: any = await Document.getInitialProps(ctx);
             return {
                 ...initialProps,
                 styles: (

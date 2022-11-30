@@ -9,7 +9,9 @@ import { createGlobalStyle } from 'styled-components';
 
 import UserProfile from '../components/UserProfile';
 import LoginForm from '../components/LoginForm';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import useInput from '../hooks/useInput';
+import Router from 'next/router';
 
 // ant design을 styled component로
 // styled component가 싫으면 useMemo(() => ({ css }), [])
@@ -30,46 +32,75 @@ const Global = createGlobalStyle`
         padding-right: 0 !important;
     }
 `
+const SearchInput = styled(Input.Search)`
+  vertical-align: middle;
+`;
 
 
 type Props = {
     children: React.ReactNode;
 };
 
-const menuItems: MenuProps["items"] = [
-    {
-        label: <Link href="/"><a>노드버드</a></Link>,
-        key: "home",
-    },
-    {
-        label: <Link href="/profile"><a>프로필</a></Link>,
-        key: "profile",
-    },
-    {
-        label: <Input.Search enterButton style={{ verticalAlign: 'middle' }} />,
-        key: "search",
-    },
-    {
-        label: <Link href="/signup"><a>회원가입</a></Link>,
-        key: "signup",
-    },
-]
+// const menuItems: MenuProps["items"] = [
+//     {
+//         label: <Link href="/"><a>노드버드</a></Link>,
+//         key: "home",
+//     },
+//     {
+//         label: <Link href="/profile"><a>프로필</a></Link>,
+//         key: "profile",
+//     },
+//     {
+//         label: <Input.Search enterButton 
+//         value={searchInput}
+//         onChange={onChangeSearchInput}
+//         onSearch={onSearch}
+//         style={{ verticalAlign: 'middle' }} />,
+//         key: "search",
+//     },
+//     {
+//         label: <Link href="/signup"><a>회원가입</a></Link>,
+//         key: "signup",
+//     },
+// ]
 
 const AppLayout: React.FC<Props> = ({ children }) => {
-    const [current, setCurrent] = useState("home");
+    const [searchInput, onChangeSearchInput] = useInput('');
+    // const [current, setCurrent] = useState("home");
     // redux로 관리하기 때문에 필요 없어짐
     // const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
     // const isLoggedIn = useSelector((state: any) => state.user.isLoggedIn);
     const { me } = useSelector((state: any) => state.user);
 
-    const onMenu: MenuProps["onClick"] = (e) => {
-        setCurrent(e.key);
-    };
+    const onSearch = useCallback(() => {
+        // 검색시 url이동
+        Router.push(`/hashtag/${searchInput}`);
+    }, [searchInput]);
+
+    // const onMenu: MenuProps["onClick"] = (e) => {
+    //     setCurrent(e.key);
+    // };
 
     return (
         <div>
             <Global />
-            <Menu onClick={onMenu} selectedKeys={[current]} items={menuItems} mode="horizontal" />
+            {/* <Menu onClick={onMenu} selectedKeys={[current]} items={menuItems} mode="horizontal" /> */}
+            <Menu mode="horizontal">
+                <Menu.Item>
+                    <Link href="/"><a>노드버드</a></Link>
+                </Menu.Item>
+                <Menu.Item>
+                    <Link href="/profile"><a>프로필</a></Link>
+                </Menu.Item>
+                <Menu.Item>
+                    <SearchInput
+                        enterButton
+                        value={searchInput}
+                        onChange={onChangeSearchInput}
+                        onSearch={onSearch}
+                    />
+                </Menu.Item>
+            </Menu>
             <Row gutter={8}>
                 <Col xs={24} md={6}>
                     {me ?

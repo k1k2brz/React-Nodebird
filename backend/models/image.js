@@ -1,20 +1,27 @@
-module.exports = (sequelize, DataTypes) => {
-  const Image = sequelize.define(
-    "Image",
-    {
-      src: {
-        type: DataTypes.STRING(200), // 이미지는 url이라 길어질 수 있기 때문에 200자
-        allowNull: false,
+const DataTypes = require("sequelize");
+const { Model } = DataTypes;
+
+module.exports = class Image extends Model {
+  static init(sequelize) {
+    return super.init(
+      {
+        // id가 기본적으로 들어있다.
+        src: {
+          type: DataTypes.STRING(200), // 이미지 변환 소스가 길어질 수 있으므로
+          allowNull: false,
+        },
       },
-    },
-    {
-      charser: "utf8",
-      collate: "utf8_general_ci",
-    }
-  );
-  Image.associate = (db) => {
-    // 게시글1 이미지 다수 (일대 다 관계)
+      {
+        modelName: "Image",
+        tableName: "images",
+        charset: "utf8",
+        collate: "utf8_general_ci",
+        sequelize,
+      }
+    );
+  }
+  static associate(db) {
+    // 게시글 1 이미지 다수 (다대 다)
     db.Image.belongsTo(db.Post);
-  };
-  return Image;
+  }
 };

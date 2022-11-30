@@ -5,19 +5,23 @@
   "main": "index.js",
   "scripts": {
     "dev": "next -p 3060",
-    "build": "next build"
+    "build": "cross-env ANALYZE=true NODE_ENV=production next build",
+    "start": "cross-env NODE_ENV=production next start -p 3060"
   },
   "author": "Lee-Tae-Il",
   "license": "ISC",
   "dependencies": {
     "@ant-design/compatible": "^5.0.0",
     "@ant-design/icons": "^4.8.0",
+    "@next/bundle-analyzer": "^13.0.5",
     "@reduxjs/toolkit": "^1.9.0",
     "antd": "^4.24.3",
     "axios": "^1.2.0",
     "babel-plugin-styled-components": "^2.0.7",
+    "cross-env": "^7.0.3",
     "faker": "^6.6.6",
     "immer": "^9.0.16",
+    "moment": "^2.29.4",
     "next": "^9.5.5",
     "next-redux-wrapper": "^8.0.0",
     "prop-types": "^15.8.1",

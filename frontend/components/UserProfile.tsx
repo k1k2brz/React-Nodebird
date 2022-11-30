@@ -22,12 +22,16 @@ const UserProfile = () => {
                         </a>
                     </Link>
                 </div>,
-                <div key="followings">팔로잉<br />{me.Followings.length}</div>,
-                <div key="followers">팔로워<br />{me.Followers.length}</div>,
+                <div key="followings"><Link href="/profile"><a>팔로잉<br />{me.Followings.length}</a></Link></div>,
+                <div key="followers"><Link href="/profile"><a>팔로워<br />{me.Followers.length}</a></Link></div>,
             ]}
         >
             <Card.Meta
-                avatar={<Avatar>{me.nickname[0]}</Avatar>}
+                avatar={(
+                    <Link href={`/user/${me.id}`}>
+                        <Avatar>{me.nickname[0]}</Avatar>
+                    </Link>
+                )}
                 title={me.nickname}
             />
             <Button onClick={onLogOut} loading={logOutLoading}>로그아웃</Button>
