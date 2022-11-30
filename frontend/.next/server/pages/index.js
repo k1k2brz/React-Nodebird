@@ -406,8 +406,10 @@ const getServerSideProps = configureStore["a" /* default */].getServerSideProps(
   console.log('getServerSideProps end');
   await store.sagaTask.toPromise(); // store에 sagaTask
   // 실행된 결과 HYDRATE로 보낸다 (reducer index)
+  return {
+    props: {}
+  };
 });
-
 /* harmony default export */ var pages = __webpack_exports__["default"] = (Home);
 
 /***/ }),
