@@ -9,6 +9,8 @@ const passport = require("passport");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 const path = require("path");
+const hpp = require("hpp");
+const helmet = require("helmet");
 
 const postRouter = require("./routes/post");
 const postsRouter = require("./routes/posts");
@@ -30,14 +32,25 @@ db.sequelize
   .catch(console.error);
 passportConfig();
 
+// 배포모드
+if (process.env.NODE_ENV === "production") {
+  // 로그를 좀 더 자세하게 하기 위해 combined
+  app.use(morgan("combined"));
+  // 보안에 도움되는 패키지
+  app.use(hpp());
+  app.use(helmet());
+} else {
+  app.use(morgan("dev"));
+}
+
 // 프론트에서 백엔드로 요청 보낼 때 어떤 요청들을 보냈는지 기록 됨
-app.use(morgan("dev"));
+// app.use(morgan("dev"));
 
 // cors에러 해결
 app.use(
   cors({
     // https://localhost:3060에서 온 요청만 허용
-    origin: "http://localhost:3060",
+    origin: ["http://localhost:3060", "nodebird.com"],
     // origin: "*", // 모두 허용 (withCredentials: true일 땐 사용 불가) origin: true로 바꿔도 됨
     // 쿠키를 같이 전달 해준다 (도메인이 다르면 쿠키도 전달이 안되니까 cors로 허용)
     credentials: true,
